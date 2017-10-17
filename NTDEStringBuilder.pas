@@ -4,8 +4,7 @@ interface
 
 uses
   System.Classes,
-  System.SysUtils,
-  Winapi.Windows;
+  System.SysUtils;
 
 {$ZEROBASEDSTRINGS ON}
 
@@ -65,7 +64,7 @@ begin
   if FLength + LLen >= FCapacity then
     Malloc(LLen);
 
-  CopyMemory(FNextChar, @AValue[0], LLen * SizeOf(Char));
+  Move(AValue[0], FNextChar^, LLen * SizeOf(Char));
   FLength := FLength + LLen;
   Inc(FNextChar, LLen);
 end;
