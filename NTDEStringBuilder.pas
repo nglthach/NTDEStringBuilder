@@ -25,6 +25,7 @@ type
     procedure Append(const AValue: Integer); overload; inline;
     procedure Append(const AValue: Cardinal); overload; inline;
     procedure Append(const AValue: string); overload; inline;
+    procedure Append(const AValue: TCharArray; const ALength: Integer); overload; inline;
     procedure Clear;
     procedure Reset;
     function ToString: string; override;
@@ -42,7 +43,7 @@ begin
     Malloc(1);
 
   FNextChar[0] := AValue;
-  FLength := FLength + 1;
+  Inc(FLength);
   Inc(FNextChar);
 end;
 
@@ -65,8 +66,18 @@ begin
     Malloc(LLen);
 
   Move(AValue[0], FNextChar^, LLen * SizeOf(Char));
-  FLength := FLength + LLen;
+  Inc(FLength, LLen);
   Inc(FNextChar, LLen);
+end;
+
+procedure TNTDEStringBuilder.Append(const AValue: TCharArray; const ALength: Integer);
+begin
+  if FLength + ALength >= FCapacity then
+    Malloc(ALength);
+
+  Move(AValue[0], FNextChar^, ALength * SizeOf(Char));
+  Inc(FLength, ALength);
+  Inc(FNextChar, ALength);
 end;
 
 procedure TNTDEStringBuilder.Clear;
