@@ -2,12 +2,16 @@ program NTDEStringBuilderTest;
 
 {$APPTYPE CONSOLE}
 {$ZEROBASEDSTRINGS ON}
+{$DEFINE USE_FAST_STRINGBUILDER}
 {$R *.res}
 
 uses
   System.Classes,
   System.Generics.Collections,
   System.SysUtils,
+{$IFDEF USE_FAST_STRINGBUILDER}
+  FastStringBuilder,
+{$ENDIF}
   NTDEStringBuilder in 'NTDEStringBuilder.pas';
 
 
@@ -31,6 +35,7 @@ const
 var
   i, j: Integer;
   C: Char;
+  LTestString: string;
   LString: string;
   LStrings: TList<string>;
   LNumber: Integer;
@@ -38,11 +43,17 @@ var
   LTick: Cardinal;
   LStringBuilder: TStringBuilder;
   LNTDEStringBuilder: TNTDEStringBuilder;
+{$IFDEF USE_FAST_STRINGBUILDER}
+  LFastStringBuilder: FastStringBuilder.TStringBuilder;
+{$ENDIF}
 
 begin
   Randomize;
   LStringBuilder := TStringBuilder.Create;
   LNTDEStringBuilder := TNTDEStringBuilder.Create;
+{$IFDEF USE_FAST_STRINGBUILDER}
+  LFastStringBuilder := FastStringBuilder.TStringBuilder.Create;
+{$ENDIF}
   // Generate random strings
   LStrings := TList<string>.Create;
   for i := 1 to TestStringCount do
@@ -52,6 +63,20 @@ begin
   LNumbers := TList<Integer>.Create;
   for i := 1 to TestNumberCount do
     LNumbers.Add(Random(100000) - 50000);
+
+  // Test TNTDEStringBuilder
+  for i := 1 to 1000 do
+  begin
+    LTestString := '';
+    LNTDEStringBuilder.Reset;
+    for LString in LStrings do
+    begin
+      LTestString := LTestString + LString;
+      LNTDEStringBuilder.Append(LString);
+    end;
+
+    Assert(LTestString = LNTDEStringBuilder.ToString);
+  end;
 
   // Test performance of TStringBuilder
   LTick := TThread.GetTickCount;
@@ -83,6 +108,23 @@ begin
   end;
   Writeln('TNTDEStringBuilder: ', TThread.GetTickCount - LTick, 'ms');
 
+{$IFDEF USE_FAST_STRINGBUILDER}
+  // Test performance of TStringBuilder (fastcode)
+  LTick := TThread.GetTickCount;
+  for i := 1 to TestCount do
+  begin
+    LFastStringBuilder.Clear;
+    for LString in LStrings do
+      LFastStringBuilder.Append(LString);
+    for LNumber in LNumbers do
+      LFastStringBuilder.Append(LNumber);
+    for j := 1 to TestCharCount do
+      for C := 'A' to 'Z' do
+        LFastStringBuilder.Append(C);
+  end;
+  Writeln('TFastStringBuilder: ', TThread.GetTickCount - LTick, 'ms');
+{$ENDIF}
+
   LStrings.Clear;
   LStrings.Free;
   //
@@ -91,6 +133,9 @@ begin
   //
   LStringBuilder.Free;
   LNTDEStringBuilder.Free;
+{$IFDEF USE_FAST_STRINGBUILDER}
+  LFastStringBuilder.Free;
+{$ENDIF}
 
   Writeln('Done..Press <ENTER> to exit...');
   Readln;
