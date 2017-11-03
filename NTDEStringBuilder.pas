@@ -17,15 +17,15 @@ type
     FLength: Integer;
     FString: TCharArray;
     FNextChar: PChar;
-    procedure Malloc(const ASize: Integer); inline;
+    procedure Malloc(const ASize: Integer); {$IFNDEF CPUX64} inline; {$ENDIF}
   public
     constructor Create;
     destructor Destroy; override;
-    procedure Append(const AValue: Char); overload; inline;
-    procedure Append(const AValue: Integer); overload; inline;
-    procedure Append(const AValue: Cardinal); overload; inline;
-    procedure Append(const AValue: string); overload; inline;
-    procedure Append(const AValue: TCharArray; const ALength: Integer); overload; inline;
+    procedure Append(const AValue: Char); overload; {$IFNDEF CPUX64} inline; {$ENDIF}
+    procedure Append(const AValue: Integer); overload; {$IFNDEF CPUX64} inline; {$ENDIF}
+    procedure Append(const AValue: Cardinal); overload; {$IFNDEF CPUX64} inline; {$ENDIF}
+    procedure Append(const AValue: string); overload; {$IFNDEF CPUX64} inline; {$ENDIF}
+    procedure Append(const AValue: TCharArray; const ALength: Integer); overload; {$IFNDEF CPUX64} inline; {$ENDIF}
     procedure Clear;
     procedure Reset;
     function ToString: string; override;
@@ -42,7 +42,7 @@ begin
   if FLength >= FCapacity then
     Malloc(1);
 
-  FNextChar[0] := AValue;
+  FNextChar^ := AValue;
   Inc(FLength);
   Inc(FNextChar);
 end;
@@ -97,24 +97,10 @@ begin
 end;
 
 procedure TNTDEStringBuilder.Malloc(const ASize: Integer);
-var
-  LOldLength: Integer;
-  LOldCapacity: Integer;
 begin
-  LOldLength := FLength;
-  LOldCapacity := FCapacity;
-  try
-    FCapacity := FLength + ASize + MALLOC_SIZE;
-    SetLength(FString, FCapacity);
-    FNextChar := @FString[FLength];
-  except
-    on E: EOutOfMemory do
-    begin
-      FLength := LOldLength;
-      FCapacity := LOldCapacity;
-      raise;
-    end;
-  end;
+  SetLength(FString, FLength + ASize + MALLOC_SIZE);
+  FNextChar := @FString[FLength];
+  FCapacity := FLength + ASize + MALLOC_SIZE;
 end;
 
 procedure TNTDEStringBuilder.Reset;
